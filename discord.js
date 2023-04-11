@@ -1,56 +1,48 @@
 import axios from 'axios'
 import { config } from './config.js'
 
-let lastReportedMsgId = 0
-const msgContentHash = {}
-
-export const postMsg = (message) =>
-  axios.post(
-    `https://discord.com/api/v9/channels/${config.channelId}/messages`,
-    {
-      content: message,
-      flags: 0,
-      nonce: Date.now(),
-      tts: false,
+const payload = {
+  type: 2,
+  application_id: '159985415099514880',
+  guild_id: '1078033205556416652',
+  channel_id: '1083350705089302579',
+  session_id: '9b0b39a77fb0c8de2ece96eb6b3e468e',
+  data: {
+    version: '1083348951710830601',
+    id: '1083348951664709632',
+    guild_id: '1078033205556416652',
+    name: 'work',
+    type: 1,
+    options: [],
+    application_command: {
+      id: '1083348951664709632',
+      application_id: '159985415099514880',
+      version: '1083348951710830601',
+      default_member_permissions: '2147483648',
+      type: 1,
+      nsfw: false,
+      name: 'work',
+      description: 'Work for one hour and come back to claim your paycheck',
+      guild_id: '1078033205556416652',
+      options: [{ type: 3, name: 'action', description: 'Optional action like claim' }],
     },
-    {
+    attachments: [],
+  },
+  nonce: Date.now(),
+}
+
+const form = new FormData()
+form.append('payload_json', JSON.stringify(payload))
+
+export const postInteraction = async () => {
+  try {
+    await axios.post(`https://discord.com/api/v9/interactions`, form, {
       headers: {
         authorization: config.discordToken,
-        'content-type': 'application/json',
+        'content-type': 'multipart/form-data',
       },
-    }
-  )
-
-export const getMessageToReply = async () => {
-  const latestMessages = await getLatestDiscordChanelMessages(1)
-  return filterNotReportedMessages(latestMessages)[0].content
-}
-
-const getLatestDiscordChanelMessages = async (latestCount) => {
-  try {
-    var url = `https://discord.com/api/v9/channels/${config.channelId}/messages?limit=${latestCount}`
-    return (
-      await axios.get(url, {
-        headers: {
-          authorization: config.discordToken,
-        },
-      })
-    ).data
+    })
   } catch (e) {
-    console.log(`[${new Date().toLocaleString()}]: getLatestDiscordChanelMessages failed with - ${e.message}`)
-    return []
+    console.log(JSON.stringify(e))
   }
 }
-
-const filterNotReportedMessages = (messages) => {
-  const messagesToReport = messages.filter((m) => m.id > lastReportedMsgId || hashCode(m.content) != msgContentHash[m.id])
-  lastReportedMsgId = messagesToReport[0]?.id ? Math.max(messagesToReport[0]?.id, lastReportedMsgId) : lastReportedMsgId
-  messages.forEach((m) => (msgContentHash[m.id] = hashCode(m.content)))
-  return messagesToReport
-}
-
-const hashCode = (s) =>
-  s.split('').reduce((a, b) => {
-    a = (a << 5) - a + b.charCodeAt(0)
-    return a & a
-  }, 0)

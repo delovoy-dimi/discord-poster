@@ -1,9 +1,6 @@
 export const config = {
-  discordToken: 'xxxxxx',
-  channelId: 'xxxxxx',
-  openaiApiKey: 'xxxxxx',
-  openaiOrg: 'xxxxxx',
-  postDelay: 30 * 1000,
+  discordToken: 'xxxxx',
+  postDelay: 60 * 1000 * 62, //62 mins interval
 }
 
 export const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
